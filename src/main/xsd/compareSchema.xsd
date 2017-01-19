@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <xsd:element name="comparison">
+        
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element maxOccurs="unbounded" minOccurs="0" name="driver">
+                    <xsd:complexType>
+                        <xsd:attribute name="className" form="unqualified">
+                            <xsd:annotation>
+                                <xsd:documentation>Java class name for a JDBC driver neeed by one of the
+data sources</xsd:documentation>
+                            </xsd:annotation>
+                            <xsd:simpleType>
+                                <xsd:restriction base="xsd:string" />
+                            </xsd:simpleType>
+                        </xsd:attribute>
+                    </xsd:complexType>
+                </xsd:element>
+                <xsd:element ref="datasource" maxOccurs="2" minOccurs="2">
+                    <xsd:annotation>
+                        <xsd:documentation>JDBC Data Source</xsd:documentation>
+                    </xsd:annotation>
+                </xsd:element>
+                <xsd:element maxOccurs="unbounded" ref="schema" />
+                <xsd:element name="format">
+                    <xsd:complexType>
+                        <xsd:attribute name="style" type="formatStyle" />
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="datasource">
+        
+        <xsd:complexType>
+            <xsd:attribute name="url">
+                <xsd:annotation>
+                    <xsd:documentation>A JDBC URL, in the format jdbc:databasetype:connection_description.
+</xsd:documentation>
+                </xsd:annotation>
+                <xsd:simpleType>
+                    <xsd:restriction base="xsd:string">
+                        <xsd:pattern value="jdbc:\w+:.*" />
+                    </xsd:restriction>
+                </xsd:simpleType>
+            </xsd:attribute>
+            <xsd:attribute name="user">
+                <xsd:annotation>
+                    <xsd:documentation>The user name for accessing the data source</xsd:documentation>
+                </xsd:annotation>
+            </xsd:attribute>
+            <xsd:attribute name="password">
+                <xsd:annotation>
+                    <xsd:documentation>Password for acessing the data source. Prefer integrated
+security and other means than plain passwords if possible</xsd:documentation>
+                </xsd:annotation>
+            </xsd:attribute>
+            <xsd:attribute name="displayName">
+                <xsd:annotation>
+                    <xsd:documentation>The name used in difference reports</xsd:documentation>
+                </xsd:annotation>
+            </xsd:attribute>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="schema">
+        
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element maxOccurs="unbounded" ref="table" />
+            </xsd:sequence>
+            <xsd:attribute name="name" />
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="table">
+
+        <xsd:annotation>
+            <xsd:documentation>A rule for a table, view or query. It represents one select
+from the database in either case.</xsd:documentation>
+        </xsd:annotation>
+
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="query" type="xsd:string" maxOccurs="2">
+                    <xsd:annotation>
+                        <xsd:documentation>An SQL query. This could be a join.
+If expressions or ambigious fields names are used these
+must have a unique name giving using "expression AS some_name"
+The query must not have an ORDER BY clause</xsd:documentation>
+                    </xsd:annotation>
+                </xsd:element>
+                <xsd:element maxOccurs="unbounded" name="select" minOccurs="0" type="xsd:string">
+                    <xsd:annotation>
+                        <xsd:documentation>The columns from the table or query to care for separated by commas</xsd:documentation>
+                    </xsd:annotation>
+                </xsd:element>
+                <xsd:element maxOccurs="unbounded" ref="key">
+                    <xsd:annotation>
+                        <xsd:documentation>The keys used for matching rows. If both sources have a set
+of values with the exact same value for these keys, rows are
+compared as differing. If no exact match appears, the other
+source does not have corresponding data at all.
+The keys determine the sort order.</xsd:documentation>
+                    </xsd:annotation>
+                </xsd:element>
+                <xsd:element maxOccurs="unbounded" minOccurs="0" ref="ignore">
+                    <xsd:annotation>
+                        <xsd:documentation>Ignore diffs in any attribute if condition matches</xsd:documentation>
+                    </xsd:annotation>
+                </xsd:element>
+                <xsd:element maxOccurs="unbounded" minOccurs="0" name="column">
+                    <xsd:annotation>
+                        <xsd:documentation>Special rules for a column</xsd:documentation>
+                    </xsd:annotation>
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element minOccurs="0" name="comparator" maxOccurs="unbounded">
+                                <xsd:annotation>
+                                    <xsd:documentation>Define a special comparator</xsd:documentation>
+                                </xsd:annotation>
+                                <xsd:complexType>
+                                    <xsd:sequence>
+                                        <xsd:element maxOccurs="unbounded" minOccurs="0" ref="ignorekey" />
+                                        <xsd:element name="argument" minOccurs="0">
+                                            <xsd:annotation>
+                                                <xsd:documentation>An optional single argument to the comparator class' constructor</xsd:documentation>
+                                            </xsd:annotation>
+                                            <xsd:complexType>
+                                                <xsd:attribute name="className"> </xsd:attribute>
+                                                <xsd:attribute name="value" />
+                                            </xsd:complexType>
+                                        </xsd:element>
+                                    </xsd:sequence>
+                                    <xsd:attribute name="className">
+                                        <xsd:annotation>
+                                            <xsd:documentation>A java class name (ask)</xsd:documentation>
+                                        </xsd:annotation>
+                                        <xsd:simpleType>
+                                            <xsd:restriction base="xsd:string">
+                                                <xsd:enumeration value="com.dewire.dbdiff.RightTrimmingStringComparator" />
+                                                <xsd:enumeration value="com.dewire.dbdiff.SimplisticBusinessDayComparator" />
+                                                <xsd:enumeration value="com.dewire.dbdiff.RoundingDoubleComparator" />
+                                                <xsd:enumeration value="com.dewire.dbdiff.RoundingBigDecimalComparator" />
+                                                <xsd:pattern value="(\w+\.)*\w*" />
+                                                <xsd:enumeration value="com.dewire.dbdiff.DeltaDateComparator" />
+                                                <xsd:enumeration value="com.dewire.dbdiff.DeltaIntegerComparator" />
+                                                <xsd:enumeration value="com.dewire.dbdiff.DeltaBigDecimalComparator" />
+                                                <xsd:enumeration value="com.dewire.dbdiff.StaticBusinessDayComparator" />
+                                            </xsd:restriction>
+                                        </xsd:simpleType>
+                                    </xsd:attribute>
+                                </xsd:complexType>
+                            </xsd:element>
+                            <xsd:element maxOccurs="unbounded" minOccurs="0" ref="ignore" />
+                        </xsd:sequence>
+                        <xsd:attribute name="name">
+                            <xsd:annotation>
+                                <xsd:documentation>The column name from the query. If columns are named using "AS", then
+that is the name that should be used here</xsd:documentation>
+                            </xsd:annotation>
+                        </xsd:attribute>
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:sequence>
+            <xsd:attribute name="name">
+                <xsd:annotation>
+                    <xsd:documentation>Full table name, including schema if needed by the database</xsd:documentation>
+                </xsd:annotation>
+            </xsd:attribute>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="key">
+        
+        <xsd:complexType>
+            <xsd:attribute name="comparator" />
+            <xsd:attribute name="name" />
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:simpleType name="formatStyle">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="UnidiffLike" />
+            <xsd:enumeration value="TabularOverUnder" />
+            <xsd:enumeration value="Sql" />
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:element name="value">
+        
+        <xsd:annotation>
+            <xsd:documentation>A set of matching values</xsd:documentation>
+        </xsd:annotation>
+        
+        <xsd:complexType mixed="true">
+            <xsd:attribute name="old" />
+            <xsd:attribute name="new" />
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="ignorekey">
+        
+        <xsd:annotation>
+            <xsd:documentation>A single ignore rule for a key and a possible set of values.
+All these must match.</xsd:documentation>
+        </xsd:annotation>
+        
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="name" type="xsd:string">
+                    <xsd:annotation>
+                        <xsd:documentation>Name of a field to look at</xsd:documentation>
+                    </xsd:annotation>
+                </xsd:element>
+                <xsd:element maxOccurs="unbounded" ref="value" />
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="ignore">
+        
+        <xsd:annotation>
+            <xsd:documentation>Rules for when we can ignore differences in this attribute</xsd:documentation>
+        </xsd:annotation>
+        
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element maxOccurs="unbounded" minOccurs="1" ref="ignorekey" />
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+</xsd:schema>
